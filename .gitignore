@@ -1,0 +1,12 @@
+*~
+*.log
+.*
+*.pdf
+*.aux
+*.log
+*.tex
+*.toc
+*.nav
+*.out
+*.snm
+000*
