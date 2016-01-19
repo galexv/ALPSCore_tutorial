@@ -1,0 +1,183 @@
+<[autotemplate]
+title={ALPSCore tutorial: Part I}
+author={Alexander Gaenko}
+usetheme={Frankfurt}
+usecolortheme={whale}
+lstloadlanguages={sh,C++}
+lstset={basicstyle=\small,basewidth=0.5em}
+definecolor={babyblue}{rgb}{0.54, 0.81, 0.94}
+definecolor={ballblue}{rgb}{0.13, 0.67, 0.8}
+[autotemplate]>
+
+==== What it is about ====
+
+ALPSCore originated from Algorithms and Libraries for Physics Simulations (ALPS) \url{http://alps.comp-phys.org}
+
+'''The grand idea''': Make the ``library'' code from ALPS available with a ''shorter development cycle'' and a ''decent documentation''.
+
+* What is the ''library code''?
+** That will most probably useful for many applications.
+** However, ALPSCore is oriented towards Monte Carlo.
+
+* What is the ''development cycle''?
+** Introducing features (by request?)
+** Testing the features
+** Fixing bugs
+** Documenting
+
+* What is ''decent documentation''?
+** User's documentations
+** Tutorials
+** Developer's Doxygen-generated reference.
+
+==== Web sites ====
+
+Contributors:
+* Emanuel Gull's group, University of Michigan (USA)
+* Lukas Gamper, ETH Zurich (Switzerland)
+* ...and other people.
+
+* Source code: \url{https://github.com/ALPSCore/ALPSCore}
+* Documentation \& tutorials:  \url{http://alpscore.org}
+* CloudBees for Continuous Delivery --- more on this later.
+
+<<<alpscore_sites.pdf,height=0.4\textheight>>>
+
+==== Overview ====
+<<<alpscore_classes.pdf,height=0.8\textheight,width=\textwidth,keepaspectratio>>>
+
+
+
+==== Installation ====
+
+Let's assume that @ALPSCore@ is installed and @ALPSCore\_DIR@ is
+pointing to the installation directory.
+
+* How @CMakeLists.txt@ should look to use @ALPSCore@.
+* Catch: compilers!
+
+<[code][language=sh,emph={ALPSCore_DIR},emphstyle=\color{blue},basicstyle=\ttfamily]
+$ export ALPSCore_DIR=/to/alpscore/installation
+$ export CXX=$(which needed_cpp)
+$ export CC=$(which needed_cc)
+$ cd 000build && cmake .. && 
+[code]>
+
+* Catch: if compilers change: @rm -rf CMake*@
+* Catch: if CMake files change, @cmake .@ in the build directory
+* !In-source builds are messy!
+* Catch: after accidental in-source build, remove the generated files.
+ 
+==== Parameters ====
+
+* See Doxygen documentation (link from \url{http://alpscore.org/}) for up-to-date info
+* One can use input file, override with command line:
+
+<[code][language=sh,emph={ALPSCore_DIR},emphstyle=\color{blue},basicstyle=\ttfamily]
+$ ./demo --help
+$ ./demo --name=value
+$ ./demo --flag
+[code]>
+
+* Unknown parameters silently ignored.
+* Accessing an unknown parameter throws an exception.
+* There's more: next time!
+
+==== Simple simulation class (doing nothing) ====
+
+* At this point, it is a good idea to indicate a debug or a release build:
+
+<[code][language=sh,emph={CMAKE_BUILD_TYPE},emphstyle=\color{blue},basicstyle=\ttfamily]
+$ cmake -DCMAKE_BUILD_TYPE=Debug ..
+ # or:
+$ cmake -DCMAKE_BUILD_TYPE=Release ..
+[code]>
+
+* If want to observe / troubleshoot: @make VERBOSE=1@
+
+==== How to use MPI? ====
+
+* Not many changes compared to the sequential version.
+* Note that the completion is checked only at certain intervals (1 sec minimum)
+
+See the next slides!
+
+==== MPI: Header files ====
+
+<[code][language=C++,basicstyle=\small\ttfamily,basewidth=0.4em]
+#include <alps/mc/stop_callback.hpp>
+
+[<2>#include <alps/mc/mpiadapter.hpp>]
+
+class MySimulation : public alps::mcbase {
+// ... rest of your class ...
+};
+
+[<2>typedef alps::mcmpiadapter<MySimulation> MyMpiSimulation;]
+[code]>
+
+==== MPI: main() ====
+
+<[code][language=C++,basicstyle=\small\ttfamily,basewidth=0.4em]
+    alps::params p(argc, (const char**)argv);
+[<1>    MySimulation::define_parameters(p)][<2>    MyMpiSimulation::define_parameters(p)]
+            .description("Dummy Monte Carlo program")
+// etc...
+[<2>    // init MPI, obtain communicator]
+[<2>    boost::mpi::environment mpi_env(argc, argv);]
+[<2>    boost::mpi::communicator comm;]
+[<2>    // Parse the parameters on master...]
+[<2>    alps::params p;]
+[<2>    if (comm.rank()==0) { // on master process...]
+[<2>        alps::params p_master(argc, (const char**)argv);]
+[<2>        p=p_master;]
+[<2>    }]
+[<2>    broadcast(comm, p, 0); // ...broadcast parameters to all.]
+//....         
+[code]> 
+
+==== Use of scalar accumulators ====
+
+* Time to split program into several files.
+* The problem:
+** Integral of objective function over an area.
+** Trivial Metropolis step to stay inside the area. 
+** Area: square
+** Objective function: 1 if inside an inscribed circle, 0 otherwise.
+** Expected result: $\pi$ (if multiplied by 4).
+* '''_blue_Accumulators_''': named observable to gather statistics
+* '''_blue_Results_''': named as accumulators, allow arithmetic operations (with error propagation!)
+* More of it next time!
+
+==== Type of accumulators ====
+
+* Mean only (cheapest, least useful): @_blue_MeanAccumulator_<double>@
+* No binning  (cheap, no autocorrelation info): @_blue_NoBinningAccumulator_<double>@
+* Full binning (most expensive, autocorrelation, error propagation) @_blue_FullBinningAccumulator_<double>@
+* Log binning (less memory demanding, no error propagation) @_blue_LogBinningAccumulator_<double>@
+
+* Let's see performance differences (number of step we accomplished).
+* If method is not available, it throws!
+* Let's see if it indeed parallel.
+
+==== How to do (suggestion) ====
+
+* Play with step length and see how values change.
+* Play with the number of processes.
+# First, try ``MeanAccumulator`` with different steps
+# Second, try ``NoBinning`` and report the error
+# Then try ``FullBinning`` and report tau
+# Revert to ``MeanAccumulator`` and demonstrate the error.
+
+==== For the next time ====
+
+* Debug vs Release revisited: Why should we care?
+** Why Debug is good?
+** Why Debug is bad?
+* Use of vector accumulators to do something more complex, and accumulator operations
+* Use of checkpointing
+* Assigning to parameters, from parameters
+* Proper installation
+** ``install`` target
+** Automatic setting of RPATH
+* Building of ALPSCore
