@@ -14,6 +14,19 @@ double MySimulation::objective_function(double x, double y) {
 }
     
 
+MySimulation::MySimulation(const parameters_type& params, std::size_t seed_offset)
+    : alps::mcbase(params,seed_offset), istep_(0), x_(0.0), y_(0.0)
+{
+    maxcount_=params["count"];
+    verbose_=params["verbose"];
+    burnin_=params["burn-in"];
+    stepsize_=params["step"];
+
+    // Initialize slots for the measurements (named observables)
+    measurements << my_accumulator_type("objective");
+}
+
+
 void MySimulation::update() {
     double xstep=2*(random()-0.5)*stepsize_;
     double ystep=2*(random()-0.5)*stepsize_;

@@ -14,23 +14,14 @@ class MySimulation : public alps::mcbase {
     double x_,y_;
     
   public:
+    // These we need for the simulation.
     static bool is_inside_area(double x, double y);
     static double objective_function(double x, double y);
 
-    // typedef alps::accumulators::MeanAccumulator<double> my_accumulator_type;
+    // Accumulator type to collect observables.
     typedef alps::accumulators::FullBinningAccumulator<double> my_accumulator_type;
     
-    MySimulation(const parameters_type& params, std::size_t seed_offset=0)
-        : alps::mcbase(params,seed_offset),
-          istep_(0), x_(0.0), y_(0.0)   {
-        maxcount_=params["count"];
-        verbose_=params["verbose"];
-        burnin_=params["burn-in"];
-        stepsize_=params["step"];
-
-        // Initialize slots for the measurements (named observables)
-        measurements << my_accumulator_type("objective");
-    }
+    MySimulation(const parameters_type& params, std::size_t seed_offset=0);
 
     void update();
 
