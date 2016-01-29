@@ -95,6 +95,104 @@ $ cmake -DCMAKE_BUILD_TYPE=Release ..
 
 * If want to observe / troubleshoot: @make VERBOSE=1@
 
+==== Debug vs Release Builds (1) ====
+
+* Let's look at a simple program that uses Green's Functions.
+* Compiling and running without debugging:
+<[code][language=sh,emph={ALPSCore_DIR},emphstyle=\color{blue},basicstyle=\small\ttfamily]
+$ cmake .. 
+$ make clean && make -j2 VERBOSE=1 
+$ ulimit -S -c 0 && rm -f core
+$ time -p ./alpsdemo
+[code]>
+-- -0.5\baselineskip -- 
+''...(!Crash\!! after 8 seconds)...''
+<[code][language=sh,emph={ALPSCore_DIR},emphstyle=\color{blue},basicstyle=\small\ttfamily]
+$ ulimit -c unlimited 
+$ time -p ./alpsdemo
+[code]>
+-- -0.5\baselineskip -- 
+''...(!Crash\!! after 20 s, 12 of which is dumping core)...''
+<[code][language=sh,emph={ALPSCore_DIR},emphstyle=\color{blue},basicstyle=\small\ttfamily]
+$ gdb ./alpsdemo --core=core --ex bt --ex quit 
+[code]>
+-- -0.5\baselineskip -- 
+''(No line information)'' @:-(@
+
+==== Debug vs Release Builds (2) ====
+
+* Let's look at a simple program that uses Green's Functions.
+* Compiling and running with debugging:
+<[code][language=sh,emph={DCMAKE_BUILD_TYPE,Debug},emphstyle=\color{blue},basicstyle=\small\ttfamily]
+$ cmake -DCMAKE_BUILD_TYPE=Debug .. 
+$ make clean && make -j2 VERBOSE=1 
+$ ulimit -S -c 0 && rm -f core
+$ time -p ./alpsdemo
+[code]>
+-- -0.5\baselineskip -- 
+''...(Crash\! after 8 seconds)...''
+<[code][language=sh,emph={ALPSCore_DIR},emphstyle=\color{blue},basicstyle=\small\ttfamily]
+$ ulimit -c unlimited 
+$ time -p ./alpsdemo
+[code]>
+-- -0.5\baselineskip -- 
+''...(Crash\! after 20 s, 12 of which is dumping core)...''
+<[code][language=sh,emph={ALPSCore_DIR},emphstyle=\color{blue},basicstyle=\small\ttfamily]
+$ gdb ./alpsdemo --core=core --ex bt --ex quit 
+[code]>
+-- -0.5\baselineskip -- 
+''(We have stack trace with line info!)'' @:-)@
+
+==== Debug vs Release Builds (3) ====
+
+* Let's look at a simple program that uses Green's Functions.
+* Compiling and running as release:
+<[code][language=sh,emph={Release},emphstyle=\color{blue},basicstyle=\small\ttfamily]
+$ cmake -DCMAKE_BUILD_TYPE=Release .. 
+$ make clean && make -j2 VERBOSE=1 
+$ ulimit -S -c 0 && rm -f core
+$ time -p ./alpsdemo
+[code]>
+-- -0.5\baselineskip -- 
+''...(Crash\! after !1! second\!\!\!)...''@:-)@
+<[code][language=sh,emph={ALPSCore_DIR},emphstyle=\color{blue},basicstyle=\small\ttfamily]
+$ ulimit -c unlimited 
+$ time -p ./alpsdemo
+[code]>
+-- -0.5\baselineskip -- 
+''...(Crash\! after 13 s, 12 of which is dumping core)...''
+<[code][language=sh,emph={ALPSCore_DIR},emphstyle=\color{blue},basicstyle=\small\ttfamily]
+$ gdb ./alpsdemo --core=core --ex bt --ex quit 
+[code]>
+-- -0.5\baselineskip -- 
+''...(We have short and useless stack dump)...'' :-(
+
+==== Debug vs Release Builds (4) ====
+
+* Let's look at a simple program that uses Green's Functions.
+* Compiling and running as release with debug info:
+<[code][language=sh,emph={RelWithDebInfo},emphstyle=\color{blue},basicstyle=\small\ttfamily]
+$ cmake -DCMAKE_BUILD_TYPE=RelWithDebInfo .. 
+$ make clean && make -j2 VERBOSE=1 
+$ ulimit -S -c 0 && rm -f core
+$ time -p ./alpsdemo
+[code]>
+-- -0.5\baselineskip -- 
+''...(Crash\! after !1! second\!\!\!)...''@:-)@
+<[code][language=sh,emph={ALPSCore_DIR},emphstyle=\color{blue},basicstyle=\small\ttfamily]
+$ ulimit -c unlimited 
+$ time -p ./alpsdemo
+[code]>
+-- -0.5\baselineskip -- 
+''...(Crash\! after 13 s, 12 of which is dumping core)...''
+<[code][language=sh,emph={ALPSCore_DIR},emphstyle=\color{blue},basicstyle=\small\ttfamily]
+$ gdb ./alpsdemo --core=core --ex bt --ex quit 
+[code]>
+-- -0.5\baselineskip -- 
+''...(We have short but potentially useful stack dump)...''
+
+However, by the time we crashed, memory may be '''already corrupted'''.
+
 ==== How to use MPI? ====
 
 * Not many changes compared to the sequential version.
@@ -169,13 +267,18 @@ class MySimulation : public alps::mcbase {
 # Then try ``FullBinning`` and report tau
 # Revert to ``MeanAccumulator`` and demonstrate the error.
 
+==== Checkpointing the simulation ====
+
+* Checkpoint: save intermediate results
+* Ability to resume from checkpoint
+* Easiest if root process saves, loads, broadcasts
+** (Scalability may suffer)
+
+
 ==== For the next time ====
 
-* Debug vs Release revisited: Why should we care?
-** Why Debug is good?
-** Why Debug is bad?
-* Use of vector accumulators to do something more complex, and accumulator operations
 * Use of checkpointing
+* Use of vector accumulators to do something more complex, and accumulator operations
 * Assigning to parameters, from parameters
 * Proper installation
 ** ``install`` target
