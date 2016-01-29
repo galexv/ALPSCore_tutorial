@@ -9,4 +9,5 @@
 *.nav
 *.out
 *.snm
+*.diff
 000*
