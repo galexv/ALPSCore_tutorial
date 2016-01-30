@@ -56,7 +56,7 @@ int main(int argc, char** argv)
         std::cerr << "Objective: " << objective_raw << std::endl;
         std::cerr << "Area: " << area_raw << std::endl;
         
-        const alps::accumulators::result_wrapper& res=objective_raw/area_raw; // should get PI for gamma==0
+        const alps::accumulators::result_wrapper& res=objective_raw*area_raw; // should get PI/4 for gamma==0
 
         std::cerr << "\nCount: " << objective_raw.count() << std::endl;
         std::cerr << "Mean: " << res.mean<double>() << std::endl;
