@@ -28,8 +28,8 @@ MySimulation::MySimulation(const parameters_type& params, std::size_t seed_offse
     gamma_=params["gamma"];
 
     // Initialize slots for the measurements (named observables)
-    measurements << my_accumulator_type("objective")
-                 << my_accumulator_type("area");
+    measurements << my_vector_accumulator_type("objective")
+                 << my_scalar_accumulator_type("area");
 }
 
 
@@ -70,7 +70,13 @@ void MySimulation::measure() {
     if (!is_past_burnin) return;
 
     measurements["area"] << double(inside_circle(chain_sqr_.x, chain_sqr_.y));
-    measurements["objective"] << objective_function(chain_cir_.x,chain_cir_.y,gamma_);
+
+    // compute objective function for each gamma:
+    std::vector<double> f(gamma_.size()); // place for objective function values
+    for (int i=0; i<f.size(); ++i) {
+         f[i]=objective_function(chain_cir_.x,chain_cir_.y,gamma_[i]);
+    }
+    measurements["objective"] << f;
 }
 
 double MySimulation::fraction_completed() const {
@@ -91,7 +97,7 @@ MySimulation::parameters_type& MySimulation::define_parameters(MySimulation::par
         .define("verbose", "Report steps")
         .define<long>("burn-in", 10000, "Number of steps before taking measurements")
         .define<double>("step", "Maximum size of a trial step")
-        .define<double>("gamma", "Gamma parameter");
+      .define< std::vector<double> >("gamma", "Gamma parameters");
 }
 
 // Saves the state to the hdf5 file

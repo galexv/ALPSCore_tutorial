@@ -24,7 +24,7 @@ class MySimulation : public alps::mcbase {
     long maxcount_;
     bool verbose_;
     double stepsize_;
-    double gamma_;
+    std::vector<double> gamma_;
     
     long istep_;
     
@@ -37,8 +37,10 @@ class MySimulation : public alps::mcbase {
     static int inside_circle(double x, double y);
     static double objective_function(double x, double y, double gamma);
 
-    // Accumulator type to collect observables.
-    typedef alps::accumulators::FullBinningAccumulator<double> my_accumulator_type;
+    // Accumulator type to collect scalar observables.
+    typedef alps::accumulators::FullBinningAccumulator<double> my_scalar_accumulator_type;
+    // Accumulator type to collect vector observables.
+    typedef alps::accumulators::FullBinningAccumulator< std::vector<double> > my_vector_accumulator_type;
     
     MySimulation(const parameters_type& params, std::size_t seed_offset=0);
 
