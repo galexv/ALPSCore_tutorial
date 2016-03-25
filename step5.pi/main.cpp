@@ -10,8 +10,8 @@
 int main(int argc, char** argv)
 {
     // init MPI, obtain communicator
-    boost::mpi::environment mpi_env(argc, argv);
-    boost::mpi::communicator comm;
+    alps::mpi::environment mpi_env(argc, argv);
+    alps::mpi::communicator comm;
 
     // Parse the parameters on master...
     alps::params p;

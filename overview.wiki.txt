@@ -207,7 +207,7 @@ However, by the time we crashed, memory may be '''already corrupted'''.
 * (Recall the sequential simulation, a few slides back)
 * Not many changes compared to the sequential version.
 *# Use @alps::mcmpiadapter<@''SequentialSimulationClass''@>@\\ as your simulation class.
-*# Initialize MPI environment \\ (ALPSCore uses @@boost::mpi@@ --- soon to go!)
+*# Initialize MPI environment
 *# Make sure that the parallel processes \\ do not conflict for input/output
 *# In particular, the master (rank 0) process\\ reads and broadcasts parameters
 * Note that the completion is checked only at certain intervals (1 sec minimum)
@@ -237,8 +237,8 @@ class MySimulation : public alps::mcbase {
             .description("Dummy Monte Carlo program")
 // etc...
 [<2>    // init MPI, obtain communicator]
-[<2>    boost::mpi::environment mpi_env(argc, argv);]
-[<2>    boost::mpi::communicator comm;]
+[<2>    alps::mpi::environment mpi_env(argc, argv);]
+[<2>    alps::mpi::communicator comm;]
 [<2>    // Parse the parameters on master...]
 [<2>    alps::params p;]
 [<2>    if (comm.rank()==0) { // on master process...]
